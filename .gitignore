@@ -19,3 +19,4 @@ dist/
 *.sqlite
 .aider*
 conf/server.yaml
+*.sqlite-journal
