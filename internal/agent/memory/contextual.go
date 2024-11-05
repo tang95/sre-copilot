@@ -34,43 +34,53 @@ func NewContextual(logger *zap.Logger, cfg *pkg.Config, data *data.Data) (*Conte
 	}, nil
 }
 
-func (c *Contextual) BuildMessages(ctx context.Context, userID, chatID, input string) ([]openai.ChatCompletionMessage, error) {
-	systemMessage := openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleSystem,
-		Content: c.prompts.Main,
-	}
-	messages := []openai.ChatCompletionMessage{systemMessage}
+func (contextual *Contextual) BuildMessages(ctx context.Context, userID, chatID, input string) ([]openai.ChatCompletionMessage, error) {
+	messages := make([]openai.ChatCompletionMessage, 0)
 	// 从长期记忆中获取消息
-	longTermMessages, err := c.fetchLongTermMemory(ctx, userID, chatID, input)
+	longTermMessages, err := contextual.fetchLongTermMemory(ctx, userID, chatID, input)
 	if err != nil {
 		return nil, err
 	}
-	if longTermMessages == nil && len(longTermMessages) > 0 {
+	if longTermMessages != nil && len(longTermMessages) > 0 {
 		messages = append(messages, longTermMessages...)
 	}
 	// 从短期记忆中获取消息
-	shortTermMessages, err := c.fetchShortTermMemory(ctx, userID, chatID, input)
+	shortTermMessages, err := contextual.fetchShortTermMemory(ctx, userID, chatID)
 	if err != nil {
 		return nil, err
 	}
-	if shortTermMessages == nil && len(shortTermMessages) > 0 {
+	if shortTermMessages != nil && len(shortTermMessages) > 0 {
 		messages = append(messages, shortTermMessages...)
 	}
-	messages = append(messages, openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleUser,
-		Content: input,
-	})
 	return messages, nil
 }
 
-func (c *Contextual) fetchLongTermMemory(ctx context.Context, userID, chatID, input string) ([]openai.ChatCompletionMessage, error) {
-	return nil, nil
+func (contextual *Contextual) fetchLongTermMemory(ctx context.Context, userID, chatID, input string) ([]openai.ChatCompletionMessage, error) {
+	// TODO: 从长期记忆获取信息拼接SystemMessage
+	return []openai.ChatCompletionMessage{
+		{
+			Role:    openai.ChatMessageRoleSystem,
+			Content: contextual.prompts.Main,
+		},
+	}, nil
 }
 
-func (c *Contextual) fetchShortTermMemory(ctx context.Context, userID, chatID, input string) ([]openai.ChatCompletionMessage, error) {
-	return nil, nil
+func (contextual *Contextual) fetchShortTermMemory(ctx context.Context, userID, chatID string) ([]openai.ChatCompletionMessage, error) {
+	messages, err := contextual.stm.Search(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+	return messages, nil
 }
 
-func (c *Contextual) Save(ctx context.Context, userID, chatID string, messages ...openai.ChatCompletionMessage) error {
+func (contextual *Contextual) Save(ctx context.Context, userID, chatID string, messages, newMessages []openai.ChatCompletionMessage, totalTokens, newTotalTokens int) error {
+	err := contextual.stm.Save(ctx, userID, chatID, messages, newMessages, totalTokens, newTotalTokens)
+	if err != nil {
+		return err
+	}
+	err = contextual.ltm.Save(ctx, userID, chatID, messages, newMessages, totalTokens, newTotalTokens)
+	if err != nil {
+		return err
+	}
 	return nil
 }

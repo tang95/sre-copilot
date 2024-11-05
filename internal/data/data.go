@@ -13,11 +13,11 @@ import (
 )
 
 type Data struct {
-	config         *pkg.Config
-	logger         *zap.Logger
-	database       *gorm.DB
-	AgentStateRepo model.AgentStateRepo
-	Transaction    service.Transaction
+	config           *pkg.Config
+	logger           *zap.Logger
+	database         *gorm.DB
+	AgentMessageRepo model.AgentMessageRepo
+	Transaction      service.Transaction
 }
 
 func NewData(config *pkg.Config, logger *zap.Logger) (*Data, error) {
@@ -26,7 +26,7 @@ func NewData(config *pkg.Config, logger *zap.Logger) (*Data, error) {
 		return nil, err
 	}
 	err = database.AutoMigrate(
-		&model.AgentState{},
+		&model.AgentMessage{},
 	)
 	if err != nil {
 		logger.Error("failed to auto migrate database", zap.Error(err))
@@ -38,7 +38,7 @@ func NewData(config *pkg.Config, logger *zap.Logger) (*Data, error) {
 		database: database,
 	}
 	d.Transaction = newTransaction(d)
-	d.AgentStateRepo = newAgentStateRepo(d)
+	d.AgentMessageRepo = newAgentMessageRepo(d)
 	return d, nil
 }
 

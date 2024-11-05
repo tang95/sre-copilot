@@ -1,21 +1,11 @@
-# 构建前端项目
-FROM node:lts as front
-WORKDIR /app
-COPY console/package.json .
-COPY console/yarn.lock .
-RUN yarn install
-COPY console/ .
-RUN yarn build
-
 # 构建后端项目
-FROM golang:1.23 as back
+FROM golang:1.23 AS back
 WORKDIR /app
 COPY . .
-COPY --from=front /app/dist /app/internal/controller/static
-RUN GOOS=linux GOARCH=amd64 go build -o sre-copilot ./cmd
+RUN GOOS=linux GOARCH=amd64 go build -o sre-copilot .
+
 # 运行环境
 FROM ubuntu:latest
-
 WORKDIR /app
 COPY --from=back /app/sre-copilot .
 COPY conf/server.yaml config.yaml

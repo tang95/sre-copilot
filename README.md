@@ -1,28 +1,18 @@
 # sre-copilot
 
+AI 驱动的 ChatOps 机器人，随时随地了解系统状态。
+![主页](docs/images/chat.png)
+
+**集成开发中**
+
+- 长期记忆
+- GitLab
+- Jenkins
+- Kubernetes
+- Grafana
+- 阿里云
+
 ## 开发
-
-#### 1. Git 克隆
-
-```shell
-git clone git@github.com:tang95/sre-copilot.git
-
-cd sre-copilot
-```
-
-#### 2. 前端
-
-注意后端请求转发配置[.umirc.ts](console/.umirc.ts)，详细配置参考 [Umi.js](https://umijs.org)
-
-```shell
-cd console
-yarn
-yarn start
-```
-
-访问 http://localhost:8000
-
-#### 3. 后端
 
 前提条件
 

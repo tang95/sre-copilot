@@ -30,7 +30,6 @@ type Config struct {
 		ClientId     string `mapstructure:"client_id"`
 		ClientSecret string `mapstructure:"client_secret"`
 	} `mapstructure:"robot"`
-	Model     ModelConfig  `mapstructure:"model"`
-	Embedding ModelConfig  `mapstructure:"embedding"`
-	Prompt    PromptConfig `mapstructure:"prompt"`
+	Model  ModelConfig  `mapstructure:"model"`
+	Prompt PromptConfig `mapstructure:"prompt"`
 }

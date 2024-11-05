@@ -41,20 +41,19 @@ func NewAgent(logger *zap.Logger, cfg *pkg.Config, svc *service.Service, d *data
 	}, nil
 }
 
-func (a *Agent) chatCompletion(ctx context.Context, messages []openai.ChatCompletionMessage, tools []openai.Tool) (*openai.ChatCompletionMessage, error) {
+func (a *Agent) chatCompletion(ctx context.Context, messages []openai.ChatCompletionMessage, tools []openai.Tool) (*openai.ChatCompletionResponse, *openai.ChatCompletionMessage, error) {
 	response, err := a.model.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model:    a.config.Model.Model,
 		Messages: messages,
 		Tools:    tools,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-
 	if len(response.Choices) != 1 {
-		return nil, errors.New("expected 1 choice")
+		return nil, nil, errors.New("expected 1 choice")
 	}
-	return &response.Choices[0].Message, nil
+	return &response, &response.Choices[0].Message, nil
 }
 
 func (a *Agent) buildTools(_ context.Context) ([]openai.Tool, error) {
@@ -118,15 +117,20 @@ func (a *Agent) Invoke(ctx context.Context, userID, chatID, input string) ([]ope
 		return nil, err
 	}
 	newMessages := make([]openai.ChatCompletionMessage, 0)
+	newMessages = append(newMessages, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: input,
+	})
 	messages, err := a.memory.BuildMessages(ctx, userID, chatID, input)
 	if err != nil {
 		return nil, err
 	}
-	msg, err := a.chatCompletion(ctx, messages, tools)
+	resp, msg, err := a.chatCompletion(ctx, append(messages, newMessages...), tools)
 	if err != nil {
 		return nil, err
 	}
 	newMessages = append(newMessages, *msg)
+	messageTokens := resp.Usage.PromptTokens
 	for {
 		if len(msg.ToolCalls) > 0 {
 			toolCallMessages, err := a.handleToolCalls(ctx, msg.ToolCalls)
@@ -134,7 +138,7 @@ func (a *Agent) Invoke(ctx context.Context, userID, chatID, input string) ([]ope
 				return nil, err
 			}
 			newMessages = append(newMessages, toolCallMessages...)
-			msg, err = a.chatCompletion(ctx, append(messages, newMessages...), tools)
+			resp, msg, err = a.chatCompletion(ctx, append(messages, newMessages...), tools)
 			if err != nil {
 				return nil, err
 			}
@@ -143,7 +147,7 @@ func (a *Agent) Invoke(ctx context.Context, userID, chatID, input string) ([]ope
 			break
 		}
 	}
-	err = a.memory.Save(ctx, userID, chatID, newMessages...)
+	err = a.memory.Save(ctx, userID, chatID, messages, newMessages, resp.Usage.TotalTokens, resp.Usage.TotalTokens-messageTokens)
 	if err != nil {
 		return nil, err
 	}

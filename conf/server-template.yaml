@@ -1,0 +1,23 @@
+http:
+  addr: 0.0.0.0:8080
+  timeout: 10s
+  debug: false
+log_level: INFO
+database:
+  driver: sqlite
+  source: sre-copilot.db
+domain: http://localhost:8080
+robot:
+  type: dingtalk
+  client_id: you_app_key
+  client_secret: you_app_secret
+model:
+  type: openai
+  model: gpt-4o
+  api_key: you_api_key
+prompt:
+  main: -|
+    你是一个资深的 SRE 工程师，回答用户的问题。
+    - 可以调用工具获取信息。
+    - 回答应该是简洁明了。
+    - 回答问题时，尽量使用中文。

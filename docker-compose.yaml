@@ -1,0 +1,35 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: always
+    ports:
+      - 6333:6333
+      - 6334:6334
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: sre-copilot
+      MYSQL_DATABASE: sre-copilot
+      MYSQL_USER: sre-copilot
+      MYSQL_PASSWORD: sre-copilot
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - 3306:3306
+
+  service:
+    build:
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - qdrant
+      - mysql
+    ports:
+      - 8080:8080
+volumes:
+  qdrant_data:
+  mysql_data:

@@ -13,7 +13,7 @@ func (d *DingTalk) OnChatBotMessageReceived(ctx context.Context, data *chatbot.B
 		d.logger.Error("invoke agent error", zap.Error(err))
 		return nil, err
 	}
-	if err := replier.SimpleReplyText(ctx, data.SessionWebhook, []byte(messages[len(messages)-1].Content)); err != nil {
+	if err := replier.SimpleReplyMarkdown(ctx, data.SessionWebhook, []byte(messages[len(messages)-1].Content), []byte(messages[len(messages)-1].Content)); err != nil {
 		d.logger.Error("reply error", zap.Error(err))
 		return nil, err
 	}
